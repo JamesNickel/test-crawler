@@ -12,6 +12,7 @@ class DigikalaCrawler extends SourceCrawler
         DB::table('crawls')->where('id', $crawlId)->update(['status' => 'running']);
 
         Log::info('Crawling ' . $this->source->base_url);
+        $this->insertDummyData();
 
         $html = $this->fetch($this->source->base_url);
         if (!$html) {
@@ -71,35 +72,6 @@ class DigikalaCrawler extends SourceCrawler
     }
 
     private function upsertProduct(array $data, int $categoryId): int
-    {
-        $existing = DB::table('products')
-            ->where('source_id', $this->source->id)
-            ->where('external_id', $data['external_id'])
-            ->first();
-
-        $record = [
-            'name'         => $data['name'],
-            'price'        => $data['price'],
-            'score'        => $data['score'],
-            'score_count'  => $data['score_count'],
-            'url'          => $data['url'],
-            'category_id'  => $categoryId,
-            'source_id'    => $this->source->id,
-            'external_id'  => $data['external_id'],
-            'is_active'    => 1,
-            'updated_at'   => now(),
-        ];
-
-        if ($existing) {
-            DB::table('products')->where('id', $existing->id)->update($record);
-            return $existing->id;
-        }
-
-        $record['created_at'] = now();
-        return DB::table('products')->insertGetId($record);
-    }
-
-    private function upsertAttribute(array $data, int $categoryId): int
     {
         $existing = DB::table('products')
             ->where('source_id', $this->source->id)

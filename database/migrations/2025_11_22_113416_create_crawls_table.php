@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('crawls', function (Blueprint $table) {
-            $table->id()->autoIncrement();
+            $table->id();
             $table->foreignId('source_id')->constrained('sources')->onDelete('cascade');
             $table->integer('start_index')->default(0);
             $table->integer('fetched_count')->default(0);

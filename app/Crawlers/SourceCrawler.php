@@ -2,6 +2,7 @@
 
 namespace App\Crawlers;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Symfony\Component\DomCrawler\Crawler as DomCrawler;
 
@@ -66,5 +67,50 @@ abstract class SourceCrawler
     protected function crawler(string $html): DomCrawler
     {
         return new DomCrawler($html, $this->source->base_url);
+    }
+
+    protected function insertDummyData(){
+        DB::table('categories')->upsert([
+            ['name'=> 'گوشی', 'parent_id'=> null],
+            ['name'=> 'لپتاپ', 'parent_id'=> null],
+        ], ['name']);
+        DB::table('attributes')->insert([
+            [
+                'name'=> 'نوع گوشی موبایل',
+                'description'=> 'سیستم عامل اندروید',
+            ],
+        ]);
+        DB::table('products')->upsert([
+            [
+                'name'=> 'گوشی موبایل سامسونگ مدل Galaxy A07 دو سیم کارت ظرفیت 128 گیگابایت و رم 4 گیگابایت',
+                'description'=> '',
+                'score'=> 4.4,
+                'score_count'=> 181,
+                'price'=> 10900000,
+                'is_active'=>true,
+                'source_id'=>1,
+                'category_id'=>1,
+                'url'=>'',
+            ],
+        ], ['source_id', 'external_id']);
+        DB::table('medias')->upsert([
+            [
+                'url'=> 'https://dkstatics-public.digikala.com/digikala-products/69c8ee8dcb6d825fdb6de8a8515b2a45b4fb7a79_1763385430.jpg?x-oss-process=image/resize,m_lfit,h_800,w_800/quality,q_90',
+                'type'=> 'photo',
+                'product_id'=> 1,
+            ],
+        ], ['url']);
+        DB::table('sellers')->upsert([
+            [
+                'name'=> 'هماهنگ شاپ',
+                'source_id'=> 1,
+            ],
+        ], ['name']);
+        DB::table('product_seller')->insert([
+            [
+                'product_id'=> 1,
+                'seller_id'=> 1,
+            ],
+        ]);
     }
 }

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('sources', function (Blueprint $table) {
-            $table->id()->autoIncrement();
+            $table->id();
             $table->string('name');
             $table->string('base_url');
             $table->boolean('is_active')->default(false);

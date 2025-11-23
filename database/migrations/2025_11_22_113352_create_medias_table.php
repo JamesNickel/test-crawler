@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('medias', function (Blueprint $table) {
-            $table->id()->autoIncrement();
-            $table->string('url');
+            $table->id();
+            $table->string('url')->unique();
             $table->enum('type', ['photo', 'video']);
             $table->boolean('is_active')->default(true);
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');

@@ -12,17 +12,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('sellers', function (Blueprint $table) {
-            $table->id()->autoIncrement();
-            $table->string('name');
+            $table->id();
+            $table->string('name')->unique();
             $table->integer('score')->default(0);
             $table->integer('score_count')->default(0);
             $table->foreignId('source_id')->constrained('sources')->onDelete('cascade');
-            $table->string('external_id');
-            $table->string('url');
+            $table->string('external_id')->nullable();
+            $table->string('url')->nullable();
             $table->json('row_data')->nullable();
             $table->timestamps();
             $table->softDeletes();
-            $table->unique(['source_id', 'external_id']);
+            //$table->unique(['source_id', 'external_id']);
         });
     }
 
