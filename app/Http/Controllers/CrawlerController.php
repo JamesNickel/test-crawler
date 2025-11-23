@@ -25,10 +25,18 @@ class CrawlerController extends Controller
             'message' => null,
         ]);
 
-        //CrawlSourceJob::dispatch($crawlId);
+        CrawlSourceJob::dispatch($crawlId);
 
         return response()->json(['crawl_id' => $crawlId, 'message' => 'Crawl started']);
     }
+
+    /**
+     * This method is not for production.
+     * @param Request $request
+     * @param $sourceId
+     * @param $startIndex
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function start2(Request $request, $sourceId, $startIndex)
     {
 
