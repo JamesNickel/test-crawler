@@ -3,12 +3,15 @@
 namespace App\Crawlers;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DigikalaCrawler extends SourceCrawler
 {
     public function crawl(int $crawlId): void
     {
         DB::table('crawls')->where('id', $crawlId)->update(['status' => 'running']);
+
+        Log::info('Crawling ' . $this->source->base_url);
 
         $html = $this->fetch($this->source->base_url);
         if (!$html) {
@@ -31,7 +34,7 @@ class DigikalaCrawler extends SourceCrawler
             $this->crawlCategoryPage($categoryId, $cat['url'], $crawlId);
         }
 
-        DB::table('crawls')->where('id', $crawlId)->update(['status' => 'completed']);
+        DB::table('crawls')->where('id', $crawlId)->update(['status' => 'completed', 'message' => $this->source->base_url]);
     }
 
     private function crawlCategoryPage(int $categoryId, string $url, int $crawlId): void

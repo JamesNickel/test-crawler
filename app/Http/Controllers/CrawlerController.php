@@ -25,21 +25,16 @@ class CrawlerController extends Controller
             'message' => null,
         ]);
 
-        CrawlSourceJob::dispatch($crawlId);
+        //CrawlSourceJob::dispatch($crawlId);
 
         return response()->json(['crawl_id' => $crawlId, 'message' => 'Crawl started']);
     }
-
-    public function start2(Request $request, string $name)
+    public function start2(Request $request, $sourceId, $startIndex)
     {
-        $validated = $request->validate([
-            'source_id' => 'required|exists:sources,id',
-            'start_index' => 'integer|min:0',
-        ]);
 
         $crawlId = DB::table('crawls')->insertGetId([
-            'source_id' => $validated['source_id'],
-            'start_index' => $validated['start_index'] ?? 0,
+            'source_id' => $sourceId,
+            'start_index' => $startIndex,
             'fetched_count' => 0,
             'status' => 'stopped',
             'message' => null,
@@ -47,7 +42,7 @@ class CrawlerController extends Controller
 
         CrawlSourceJob::dispatch($crawlId);
 
-        return response()->json(['name' => $name]);
+        return response()->json(['crawl_id' => $crawlId, 'message' => 'Crawl started']);
     }
 
     public function status($id)
@@ -56,7 +51,7 @@ class CrawlerController extends Controller
         if (!$crawl) {
             //abort(404);
             //throw new NotFoundHttpException('Crawler {} not found.');
-            return response()->json(["message"=> ""], 404);
+            return response()->json(["message"=> "Crawler {$id} not found"], 404);
         }
         return response()->json($crawl);
     }

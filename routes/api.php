@@ -9,6 +9,6 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::post('/start-crawl', [CrawlerController::class, 'start']);
-Route::get('/start-crawl', [CrawlerController::class, 'start2']); // Just for test
+Route::get('/start-crawl/{source_id}/{start_index}', [CrawlerController::class, 'start2']); // Just for test
 Route::get('/crawl-status/{id}', [CrawlerController::class, 'status']);
 
