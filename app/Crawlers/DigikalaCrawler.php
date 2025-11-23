@@ -99,6 +99,35 @@ class DigikalaCrawler extends SourceCrawler
         return DB::table('products')->insertGetId($record);
     }
 
+    private function upsertAttribute(array $data, int $categoryId): int
+    {
+        $existing = DB::table('products')
+            ->where('source_id', $this->source->id)
+            ->where('external_id', $data['external_id'])
+            ->first();
+
+        $record = [
+            'name'         => $data['name'],
+            'price'        => $data['price'],
+            'score'        => $data['score'],
+            'score_count'  => $data['score_count'],
+            'url'          => $data['url'],
+            'category_id'  => $categoryId,
+            'source_id'    => $this->source->id,
+            'external_id'  => $data['external_id'],
+            'is_active'    => 1,
+            'updated_at'   => now(),
+        ];
+
+        if ($existing) {
+            DB::table('products')->where('id', $existing->id)->update($record);
+            return $existing->id;
+        }
+
+        $record['created_at'] = now();
+        return DB::table('products')->insertGetId($record);
+    }
+
     private function fetchProductDetails(int $productId, string $url): void
     {
         $html = $this->fetch($url);
@@ -109,25 +138,33 @@ class DigikalaCrawler extends SourceCrawler
         // Selector for product description box
         $desc = $dom->filter('.text-body-1.text-neutral-800')->count() ? $dom->filter('.text-body-1.text-neutral-800')->text() : null;
 
-        $dom->filter('div.styles_SpecificationAttribute__valuesBox__gvZeQ')->each(function ($node) {
-            $attribute = [
+        $attributes = [];
+        $dom->filter('div.styles_SpecificationAttribute__valuesBox__gvZeQ')->each(function ($node) use (&$attributes) {
+            $attributes[] = [
                 'name'        => $node->filter('p.styles_SpecificationAttribute__value__CQ4Rz')->text(),
                 'description' => $node->filter('p.w-full.text-body-1')->text(),
             ];
-            // TODO: upsert into 'attributes' and assign them to product
         });
-        $dom->filter('div.styles_SellerListItemDesktop__sellerListItem__u9p3q')->each(function ($node) {
-            $seller = [
+        DB::table('attributes')->upsert(
+            $attributes,
+            ['name'],
+        );
+        $sellers = [];
+        $dom->filter('div.styles_SellerListItemDesktop__sellerListItem__u9p3q')->each(function ($node) use (&$sellers) {
+            $sellers[] = [
                 'name'        => $node->filter('div.mr-4 > p')->text(),
                 'score' => 0,
                 'score_count' => 0,
                 'external_id' => '',
             ];
-            // TODO: upsert them to 'sellers' and assign them to this product
-
         });
-        $dom->filter('article.br-list-vertical-no-padding-200')->each(function ($node) {
-            $comment = [
+        DB::table('sellers')->upsert(
+            $sellers,
+            ['name'],
+        );
+        $comments = [];
+        $dom->filter('article.br-list-vertical-no-padding-200')->each(function ($node) use (&$comments) {
+            $comments[] = [
                 'name' => $node->filter('p.whitespace-nowrap.truncate')->text(),
                 'title' => null,
                 'description' => $node->filter('p.text-body-1.text-neutral-900.mb-1.break-words')->text(),
@@ -136,18 +173,17 @@ class DigikalaCrawler extends SourceCrawler
                 'like_count' => $node->filter('div.mr-auto.lg:mr-0.flex.items-center > button:nth-child(1) p')->text(),
                 'dislike_count' => $node->filter('div.mr-auto.lg:mr-0.flex.items-center > button:nth-child(2) p')->text(),
             ];
-            // TODO: upsert them to 'comments' and assign them to this product and seller
-
         });
-        $dom->filter('div.flex.items-center.mt-5.mb-3 > div > picture')->each(function ($node) {
-            $media = [
-                'url'        => $node->filter('source:nth-child(1)')->attr('srcset'),
+        DB::table('comments')->insert($comments);
+        $medias = [];
+        $dom->filter('div.flex.items-center.mt-5.mb-3 > div > picture')->each(function ($node) use (&$medias) {
+            $medias[] = [
+                'url'  => $node->filter('source:nth-child(1)')->attr('srcset'),
                 'type' => 'photo',
                 'is_active' => true,
             ];
-            // TODO: upsert them to 'media' and assign them to this product
         });
-
+        DB::table('medias')->insert($medias);
 
         DB::table('products')->where('id', $productId)->update([
             'description' => $desc,
